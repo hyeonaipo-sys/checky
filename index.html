@@ -184,12 +184,17 @@ html,body{height:100%;background:#fff;font-family:'Outfit',sans-serif;font-weigh
       <div style="padding:10px 20px 4px">
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <input class="inp" id="ldg-desc" placeholder="desc" style="font-size:16px;flex:1.2"/>
-          <input class="inp" id="ldg-amt" type="text" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;font-size:16px" oninput="fmtAmt(this)"/>
+          <input class="inp" id="ldg-amt" type="text" inputmode="decimal" placeholder="0" style="flex:1;min-width:0;font-size:16px" oninput="fmtAmt(this)"/>
           <div class="ttgl">
             <button class="tbtn ain" id="t-in" onclick="setT('in')">+</button>
             <button class="tbtn" id="t-ex" onclick="setT('ex')">−</button>
           </div>
           <button class="abtn" onclick="addLdg()">+</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+          <span style="font-size:11px;color:#bbb;flex-shrink:0">currency</span>
+          <div id="cur-btns" style="display:flex;gap:4px"></div>
+          <span id="rate-lbl" style="font-size:11px;color:#bbb;margin-left:4px"></span>
         </div>
         <div id="ldg-day-panel" style="min-height:24px;margin-top:16px"></div>
       </div>
@@ -700,30 +705,86 @@ function setT(t){
   const ti=document.getElementById('t-in'); if(ti) ti.className='tbtn'+(t==='in'?' ain':'');
   const te=document.getElementById('t-ex'); if(te) te.className='tbtn'+(t==='ex'?' aex':'');
 }
+let ldgCurrency='₩';
+const rates={'₩':1,'$':0,'¥':0,'€':0}; // 0 = 아직 미조회
+let ratesFetched=false;
+
+function rdCurBtns(){
+  const el=document.getElementById('cur-btns'); if(!el) return;
+  el.innerHTML=['₩','$','¥','€'].map(c=>`<button onclick="setCurrency('${c}')" id="cur-${c.charCodeAt(0)}" style="padding:3px 8px;border:1px solid #ddd;background:${c===ldgCurrency?'#222':'transparent'};color:${c===ldgCurrency?'#fff':'#888'};font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;border-radius:3px">${c}</button>`).join('');
+}
+function setCurrency(c){
+  ldgCurrency=c;
+  rdCurBtns();
+  if(c!=='₩'&&!ratesFetched) fetchRates();
+  else updateRateLbl();
+}
+function updateRateLbl(){
+  const el=document.getElementById('rate-lbl'); if(!el) return;
+  if(ldgCurrency==='₩'){el.textContent='';return;}
+  const r=rates[ldgCurrency];
+  el.textContent=r?`1${ldgCurrency}=₩${Math.round(r).toLocaleString('ko-KR')}`:'환율 조회중...';
+}
+async function fetchRates(){
+  const el=document.getElementById('rate-lbl');
+  if(el) el.textContent='환율 조회중...';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:200,
+        messages:[{role:'user',content:'오늘 기준 USD, JPY, EUR 의 원화(KRW) 환율을 알려줘. 반드시 JSON만 응답해. 예: {"USD":1380,"JPY":9.5,"EUR":1520} 숫자는 1단위 기준 원화값으로.'}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content.map(i=>i.text||'').join('');
+    const match=text.match(/\{[^}]+\}/);
+    if(match){
+      const parsed=JSON.parse(match[0]);
+      if(parsed.USD) rates['$']=parsed.USD;
+      if(parsed.JPY) rates['¥']=parsed.JPY;
+      if(parsed.EUR) rates['€']=parsed.EUR;
+      ratesFetched=true;
+    }
+  }catch(e){
+    if(el) el.textContent='환율 조회 실패';
+  }
+  updateRateLbl();
+}
+function getKrwAmt(amt,currency){
+  if(currency==='₩'||!currency) return amt;
+  const r=rates[currency];
+  return r?Math.round(amt*r):amt;
+}
 function fmtAmt(el){
-  const raw=el.value.replace(/[^0-9]/g,'');
-  const num=parseInt(raw)||0;
-  el.value=num>0?num.toLocaleString('ko-KR'):'';
+  const raw=el.value.replace(/[^0-9.]/g,'');
+  const parts=raw.split('.');
+  const intPart=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const decPart=parts.length>1?'.'+parts[1]:'';
+  el.value=intPart+decPart;
 }
 function addLdg(){
   const desc=(document.getElementById('ldg-desc')||{}).value||'';
   const rawAmt=(document.getElementById('ldg-amt')||{}).value||'';
-  const amt=parseInt(rawAmt.replace(/[^0-9]/g,''));
+  const amt=parseFloat(rawAmt.replace(/,/g,''));
   if(!desc.trim()||!amt||amt<=0) return;
   const d=ldgSelectedDay||dkey(now.getFullYear(),now.getMonth(),now.getDate());
-  ldg.unshift({id:Date.now(),desc:desc.trim(),amt,type:ltype,d,date:d.split('-').slice(1).map(Number).join('/')});
+  const krw=getKrwAmt(amt,ldgCurrency);
+  ldg.unshift({id:Date.now(),desc:desc.trim(),amt,currency:ldgCurrency,krw,type:ltype,d,date:d.split('-').slice(1).map(Number).join('/')});
   document.getElementById('ldg-desc').value=''; document.getElementById('ldg-amt').value='';
   updateCalCells('cal-svg-ldg'); rdLdg(); rdLdgDayPanel();
 }
 function delLdg(id){ldg=ldg.filter(l=>l.id!==id);updateCalCells('cal-svg-ldg');rdLdg();rdLdgDayPanel();}
 function rdLdg(){
-  const inc=ldg.filter(l=>l.type==='in').reduce((s,l)=>s+l.amt,0);
-  const exp=ldg.filter(l=>l.type==='ex').reduce((s,l)=>s+l.amt,0);
-  const f=n=>'₩'+n.toLocaleString('ko-KR');
+  const inc=ldg.filter(l=>l.type==='in').reduce((s,l)=>s+(l.krw||l.amt),0);
+  const exp=ldg.filter(l=>l.type==='ex').reduce((s,l)=>s+(l.krw||l.amt),0);
+  const f=n=>'₩'+Math.round(n).toLocaleString('ko-KR');
   const eli=document.getElementById('ls-in'); if(eli) eli.textContent=f(inc);
   const ele=document.getElementById('ls-ex'); if(ele) ele.textContent=f(exp);
   const b=inc-exp;
-  const elb=document.getElementById('ls-bal'); if(elb) elb.textContent=(b<0?'-':'')+'₩'+Math.abs(b).toLocaleString('ko-KR');
+  const elb=document.getElementById('ls-bal'); if(elb) elb.textContent=(b<0?'-':'')+'₩'+Math.round(Math.abs(b)).toLocaleString('ko-KR');
 }
 function rdLdgDayPanel(){
   const el=document.getElementById('ldg-day-panel'); if(!el) return;
@@ -738,7 +799,7 @@ function rdLdgDayPanel(){
     dayLdg.map(l=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5">
       <span style="font-size:14px;font-weight:500">${l.desc}</span>
       <span style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:14px;font-weight:600;color:${l.type==='in'?'#1a6e33':'#c0392b'}">${l.type==='ex'?'−':''}₩${l.amt.toLocaleString('ko-KR')}</span>
+        <span style="font-size:14px;font-weight:600;color:${l.type==='in'?'#27ae60':'#e74c3c'}">${l.type==='ex'?'−':''}${l.currency&&l.currency!=='₩'?l.currency+l.amt.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})+' (₩'+Math.round(l.krw||l.amt).toLocaleString('ko-KR')+')':'₩'+(l.krw||l.amt).toLocaleString('ko-KR')}</span>
         <button onclick="delLdg(${l.id})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:16px">×</button>
       </span>
     </div>`).join('');
@@ -842,7 +903,7 @@ setTimeout(()=>{
   ['mlbl','mlbl-appt','mlbl-ldg'].forEach(id=>updateMlbl(id));
   const ty=document.getElementById('tb-today'); if(ty) ty.textContent=cy;
   drawCalGrid('cal-svg'); updateCalCells('cal-svg');
-  rdDutyBanner(); rdAppt(); rdLdg(); rdMemo();
+  rdDutyBanner(); rdAppt(); rdLdg(); rdMemo(); rdCurBtns();
 },80);
 </script>
 </body>
