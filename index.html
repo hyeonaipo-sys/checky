@@ -620,7 +620,7 @@ function rdDeditList(){
       <span class="dedit-item-label" style="color:${dt.color}">${dt.label}</span>
       <input type="color" value="${dt.color}" style="width:24px;height:24px;border:none;padding:0;cursor:pointer;background:none;border-radius:50%;flex-shrink:0" onchange="changeDutyColor('${dt.id}',this.value)"/>
       <span style="flex:1"></span>
-      ${i>=4?`<button class="dedit-del" onclick="deleteDutyType('${dt.id}')">×</button>`:'<span style="width:20px"></span>'}
+      ${dutyTypes.length>1?`<button class="dedit-del" onclick="deleteDutyType('${dt.id}')">×</button>`:'<span style="width:20px"></span>'}
     </div>`).join('');
 }
 function rdColorPalette(){
