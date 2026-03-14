@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>checky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#fff;font-family:'Outfit',sans-serif;font-weight:300;color:#222}
+.app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;background:#fff}
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;overflow-y:auto;padding-bottom:68px;display:none}
+.screen.on{display:block}
+.topbar{padding:22px 20px 4px;display:flex;align-items:baseline;justify-content:space-between}
+.tb-title{font-size:26px;font-weight:700;letter-spacing:.5px}
+.tb-sub{font-size:13px;color:#bbb}
+.mnav{display:flex;align-items:center;padding:4px 20px 6px;justify-content:center;position:relative}
+.nbtn{background:none;border:none;font-size:24px;cursor:pointer;color:#333;line-height:1;font-family:'Outfit',sans-serif}
+.mnav-lbl{font-size:20px;font-weight:600;flex:none;padding:0 16px;font-family:'Outfit',sans-serif}
+#input-mode-btn{position:absolute;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:#bbb;padding:0;font-family:'Outfit',sans-serif;line-height:1}
+.stats{display:flex;gap:8px;padding:4px 14px 6px;flex-wrap:wrap}
+.schip{font-size:14px;padding:0 3px;font-weight:300}
+.cal-wrap{padding:0 12px}
+.cal-wrap svg{display:block;width:100%}
+
+/* duty banner */
+.duty-banner{margin:8px 14px 0;padding:10px 14px;border:1px solid #e8e8e8}
+.duty-banner-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.duty-banner-title{font-size:12px;color:#aaa;font-weight:300;letter-spacing:.5px}
+.duty-banner-btns{display:flex;gap:6px}
+.duty-edit-btn{background:none;border:none;cursor:pointer;font-size:14px;color:#bbb}
+.duty-edit-btn:hover{color:#555}
+.duty-chips-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.duty-chip{display:flex;align-items:center;justify-content:center;cursor:pointer;padding:6px 12px;border:1px solid #e8e8e8;min-width:44px;transition:all .1s;opacity:.35;pointer-events:none}
+.duty-chip.active-mode{opacity:1;pointer-events:auto}
+.duty-chip-label{font-size:15px;font-weight:500}
+.duty-chip-add{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px dashed #ccc;cursor:pointer;font-size:18px;color:#bbb;background:none}
+.duty-chip-add:hover{border-color:#888;color:#555}
+.duty-chip-done{padding:6px 14px;border:1px solid #bbb;background:none;cursor:pointer;font-size:13px;color:#555;font-family:'Outfit',sans-serif}
+
+/* other screens */
+.inp-row{display:flex;gap:6px;padding:12px 20px;align-items:flex-end}
+.inp{flex:1;border:none;border-bottom:1.5px solid #bbb;padding:4px 2px;font-size:19px;font-family:'Outfit',sans-serif;background:transparent;color:#222;outline:none;min-width:0}
+.inp::placeholder{color:#ccc}
+.inp-sm{width:108px;flex:0 0 auto;margin-left:8px}
+.abtn{background:#222;color:#fff;border:none;width:30px;height:30px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:4px}
+.sec-lbl{font-size:14px;color:#bbb;padding:8px 20px 4px;display:block}
+.list{display:flex;flex-direction:column}
+.aitem,.litem,.mcard{padding:10px 20px;border-bottom:1px solid #f0f0f0;position:relative}
+.aname,.ldesc{font-size:19px;font-weight:500}
+.adate,.ldate{font-size:14px;color:#aaa;margin-top:1px}
+.lamt{font-size:17px;font-weight:600;position:absolute;right:46px;top:50%;transform:translateY(-50%)}
+.dbtn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;color:#ddd;cursor:pointer}
+.dbtn:hover{color:#999}
+.empty-st{text-align:center;padding:44px 20px;color:#ccc;font-size:17px}
+.lsummary{margin:10px 20px 6px;display:flex;border:1px solid #ddd}
+.lsi{flex:1;padding:8px 6px;text-align:center}.lsi+.lsi{border-left:1px solid #ddd}
+.lsl{font-size:12px;color:#bbb;margin-bottom:2px}
+.lsv{font-size:20px;font-weight:600}
+.iv{color:#1a6e33}.ev{color:#c0392b}
+.ttgl{display:flex;border:1px solid #bbb;flex-shrink:0;margin-left:6px}
+.tbtn{padding:6px 8px;font-size:14px;font-weight:500;cursor:pointer;background:transparent;border:none;color:#bbb;font-family:'Outfit',sans-serif}
+.tbtn.ain,.tbtn.aex{background:#222;color:#fff}
+.madd{padding:12px 20px 4px}
+.mta{width:100%;border:none;border-bottom:1.5px solid #bbb;padding:6px 2px;font-size:17px;font-family:'Outfit',sans-serif;background:transparent;color:#222;outline:none;resize:none;min-height:72px;line-height:1.7}
+.msub{background:#222;color:#fff;border:none;padding:4px 14px;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;display:block}
+.mct{font-size:16px;line-height:1.65;padding-right:28px}
+.mcd{font-size:13px;color:#bbb;margin-top:4px}
+.mcard .dbtn{top:12px;transform:none}
+.tabbar{height:62px;background:#fff;display:flex;flex-shrink:0;border-top:1px solid #eee}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;color:#ccc;font-family:'Outfit',sans-serif;transition:color .1s}
+.tab.on{color:#222}
+.ti{font-size:18px;line-height:1}
+.tl{font-size:11px;font-weight:600}
+
+/* modals */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.2);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.msheet{background:#fff;padding:22px 20px 30px;width:100%;max-width:480px;border-top:1px solid #ddd}
+.mtitle{font-size:20px;font-weight:600;margin-bottom:14px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.dopt{padding:12px 8px;border:1px solid #e8e8e8;cursor:pointer;text-align:center;transition:border-color .1s}
+.dopt.sel{border-color:#222;background:#fafafa}
+.doi{font-size:20px;margin-bottom:3px}
+.dol{font-size:16px;font-weight:600}
+.dos{font-size:13px;color:#bbb;margin-top:1px}
+.dopt[data-v=D].sel{border-color:#2244bb}.dopt[data-v=E].sel{border-color:#1a6e33}
+.dopt[data-v=N].sel{border-color:#5522aa}.dopt[data-v=OFF].sel{border-color:#aaa}
+.mmemo{width:100%;border:none;border-bottom:1px solid #bbb;padding:6px 2px;font-size:16px;font-family:'Outfit',sans-serif;background:transparent;color:#222;outline:none;resize:none;margin-bottom:14px}
+.macts{display:flex;gap:8px}
+.mb{flex:1;padding:11px;font-size:16px;font-weight:500;cursor:pointer;border:1px solid #bbb;background:transparent;color:#222;font-family:'Outfit',sans-serif}
+.mb-save{background:#222;color:#fff;border-color:#222}
+.mb-clear{flex:0 0 auto;padding:11px 12px;border-color:#e8e8e8;color:#bbb}
+
+/* duty edit modal */
+.dedit-bg{position:fixed;inset:0;background:rgba(0,0,0,.2);display:flex;align-items:flex-end;justify-content:center;z-index:60}
+.dedit-sheet{background:#fff;padding:20px 18px 30px;width:100%;max-width:480px;border-top:1px solid #ddd}
+.dedit-title{font-size:18px;font-weight:600;margin-bottom:14px}
+.dedit-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.dedit-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5}
+.dedit-item-label{font-size:15px;font-weight:600;width:44px}
+.dedit-del{background:none;border:none;color:#ddd;cursor:pointer;font-size:18px}
+.dedit-del:hover{color:#e74c3c}
+.dedit-add-row{display:flex;gap:8px;margin-bottom:10px}
+.dedit-inp{flex:1;border:none;border-bottom:1px solid #bbb;padding:4px 2px;font-size:15px;font-family:'Outfit',sans-serif;background:transparent;color:#222;outline:none}
+.dedit-inp::placeholder{color:#ccc}
+.dedit-btns{display:flex;gap:8px;justify-content:flex-end}
+.dedit-save{background:#222;color:#fff;border:none;padding:8px 18px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer}
+.dedit-close{background:none;border:1px solid #ddd;padding:8px 18px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;color:#888}
+.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;flex-shrink:0}
+.color-swatch:hover{opacity:.8}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="screens">
+
+    <!-- DUTY -->
+    <div class="screen on" id="s-duty">
+      <div class="topbar"><span class="tb-title">checky</span><span id="tb-today" class="tb-sub"></span></div>
+      <div class="mnav">
+        <button class="nbtn" onclick="chM(-1)">‹</button>
+        <span class="mnav-lbl" id="mlbl"></span>
+        <button class="nbtn" onclick="chM(1)">›</button>
+        <button id="input-mode-btn" onclick="toggleInputMode()">+</button>
+      </div>
+      <div class="cal-wrap"><svg id="cal-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="stats" id="stats"></div>
+      <div class="duty-banner">
+        <div class="duty-banner-top">
+          <span class="duty-banner-title">duty</span>
+          <div class="duty-banner-btns">
+            <button class="duty-edit-btn" onclick="resetLastDuty()" title="undo">↺</button>
+            <button class="duty-edit-btn" onclick="openDutyEdit()" title="edit">✏️</button>
+          </div>
+        </div>
+        <div class="duty-chips-row" id="duty-chips"></div>
+      </div>
+    </div>
+
+    <!-- APPT -->
+    <div class="screen" id="s-appt">
+      <div class="topbar"><span class="tb-title">SCHEDULE</span><span id="tb-today-appt" class="tb-sub"></span></div>
+      <div class="mnav" style="justify-content:center">
+        <button class="nbtn" onclick="chM(-1)">‹</button>
+        <span class="mnav-lbl" id="mlbl-appt" style="flex:none;padding:0 16px;font-weight:600"></span>
+        <button class="nbtn" onclick="chM(1)">›</button>
+      </div>
+      <div class="cal-wrap"><svg id="cal-svg-appt" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div style="padding:10px 20px 4px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+          <input class="inp" id="appt-txt" placeholder="add" style="font-size:16px"/>
+          <input type="color" id="appt-color" value="#b0c4e8" style="width:28px;height:28px;border:1px solid #eee;padding:0;cursor:pointer;border-radius:50%;flex-shrink:0"/>
+          <button class="abtn" onclick="addApptDirect()">+</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:#bbb;flex-shrink:0">from</span>
+          <span id="appt-start-lbl" style="flex:1;font-size:12px;color:#555;border-bottom:1px solid #ddd;padding:2px;min-height:20px">—</span>
+          <span style="font-size:12px;color:#bbb;flex-shrink:0">to</span>
+          <span id="appt-end-lbl" style="flex:1;font-size:12px;color:#555;border-bottom:1px solid #ddd;padding:2px;min-height:20px">—</span>
+          <button onclick="clearApptRange()" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+        </div>
+        <div id="appt-day-panel" style="min-height:20px;margin-top:16px"></div>
+      </div>
+      <div class="list" id="appt-list" style="display:none"></div>
+    </div>
+
+    <!-- LEDGER -->
+    <div class="screen" id="s-ledger">
+      <div class="topbar"><span class="tb-title">MONEY</span><span id="tb-today-ldg" class="tb-sub"></span></div>
+      <div class="mnav" style="justify-content:center">
+        <button class="nbtn" onclick="chM(-1)">‹</button>
+        <span class="mnav-lbl" id="mlbl-ldg" style="flex:none;padding:0 16px;font-weight:600"></span>
+        <button class="nbtn" onclick="chM(1)">›</button>
+      </div>
+      <div class="cal-wrap"><svg id="cal-svg-ldg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="lsummary">
+        <div class="lsi"><div class="lsl">income</div><div class="lsv iv" id="ls-in">0원</div></div>
+        <div class="lsi"><div class="lsl">expense</div><div class="lsv ev" id="ls-ex">0원</div></div>
+        <div class="lsi"><div class="lsl">balance</div><div class="lsv" id="ls-bal">0원</div></div>
+      </div>
+      <div style="padding:10px 20px 4px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input class="inp" id="ldg-desc" placeholder="desc" style="font-size:16px;flex:1.2"/>
+          <input class="inp" id="ldg-amt" type="number" placeholder="amount" style="flex:1;min-width:0;font-size:16px"/>
+          <div class="ttgl">
+            <button class="tbtn ain" id="t-in" onclick="setT('in')">+</button>
+            <button class="tbtn" id="t-ex" onclick="setT('ex')">−</button>
+          </div>
+          <button class="abtn" onclick="addLdg()">+</button>
+        </div>
+        <div id="ldg-day-panel" style="min-height:24px;margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- NOTE -->
+    <div class="screen" id="s-memo">
+      <div class="topbar"><span class="tb-title">NOTE</span><span class="tb-sub">checklist</span></div>
+      <div id="mcards" style="padding:8px 0"></div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab on" onclick="goTab('duty',this)"><span class="ti">🗓</span><span class="tl">DUTY</span></button>
+    <button class="tab" onclick="goTab('appt',this)"><span class="ti">📌</span><span class="tl">SCHEDULE</span></button>
+    <button class="tab" onclick="goTab('ledger',this)"><span class="ti">💴</span><span class="tl">MONEY</span></button>
+    <button class="tab" onclick="goTab('memo',this)"><span class="ti">📝</span><span class="tl">NOTE</span></button>
+  </div>
+</div>
+
+<!-- DAY MODAL -->
+<div class="mbg" id="modal" style="display:none" onclick="if(event.target===this)closeM()">
+  <div class="msheet">
+    <div class="mtitle" id="m-title"></div>
+    <textarea class="mmemo" id="m-memo" rows="2" placeholder="memo (optional)"></textarea>
+    <div class="macts">
+      <button class="mb mb-clear" onclick="clearDay()">clear</button>
+      <button class="mb" onclick="closeM()">cancel</button>
+      <button class="mb mb-save" onclick="saveDay()">save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUTY EDIT MODAL -->
+<div class="dedit-bg" id="dedit-modal" style="display:none" onclick="if(event.target===this)closeDutyEdit()">
+  <div class="dedit-sheet">
+    <div class="dedit-title">edit duty types</div>
+    <div class="dedit-list" id="dedit-list"></div>
+    <div style="font-size:13px;color:#bbb;margin-bottom:8px">add new</div>
+    <div class="dedit-add-row">
+      <input class="dedit-inp" id="dedit-name" placeholder="name (e.g. DAY)" maxlength="5"/>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin:10px 0 14px;flex-wrap:wrap" id="color-palette"></div>
+    <div class="dedit-btns">
+      <button class="dedit-close" onclick="closeDutyEdit()">close</button>
+      <button class="dedit-save" onclick="addDutyType()">add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const now=new Date();
+let cy=now.getFullYear(), cm=now.getMonth();
+let ddata={}, appts=[], ldg=[], memos=[];
+let sd=null, ltype='in';
+let inputMode=false, currentInputDay=1;
+let apptRangeStart=null, apptRangeEnd=null, apptClickStep=0; // 0=첫클릭대기, 1=끝클릭대기
+let ldgSelectedDay=null;
+let newDutyColor='#2244bb';
+
+const gridDrawn={};
+
+const MN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const PALETTE=['#2244bb','#c0392b','#1a6e33','#5522aa','#c47a00','#0077a8','#b5451b','#2a7a6a','#888070','#333333'];
+
+let dutyTypes=[
+  {id:'D',label:'D',color:'#2244bb'},
+  {id:'E',label:'E',color:'#1a6e33'},
+  {id:'N',label:'N',color:'#5522aa'},
+  {id:'OFF',label:'OFF',color:'#888070'},
+];
+
+const rnd=()=>(Math.random()-.5);
+function sketchPath(x1,y1,x2,y2){
+  const isH=Math.abs(x2-x1)>Math.abs(y2-y1);
+  const pts=[];
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const t=i/steps;
+    let x=x1+(x2-x1)*t, y=y1+(y2-y1)*t;
+    const edge=(i===0||i===steps)?0.15:1;
+    if(isH) y+=rnd()*6*edge; else x+=rnd()*6*edge;
+    pts.push([x,y]);
+  }
+  let d=`M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for(let i=1;i<pts.length;i++) d+=` L${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)}`;
+  return d;
+}
+function mk(tag,attrs){
+  const el=document.createElementNS(NS,tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+  return el;
+}
+function addL(svg,x1,y1,x2,y2,sw,col){
+  svg.appendChild(mk('path',{fill:'none',stroke:col||'#444','stroke-width':sw||'1.3','stroke-linecap':'round','stroke-linejoin':'round',d:sketchPath(x1,y1,x2,y2)}));
+}
+
+function goTab(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  btn.classList.add('on');
+  if(id==='appt'){setTimeout(()=>{drawCalGrid('cal-svg-appt');updateCalCells('cal-svg-appt');updateMlbl('mlbl-appt');},30);rdAppt();}
+  if(id==='ledger'){setTimeout(()=>{drawCalGrid('cal-svg-ldg');updateCalCells('cal-svg-ldg');updateMlbl('mlbl-ldg');},30);rdLdg();}
+  if(id==='memo') rdMemo();
+}
+
+function dkey(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+function chM(n){
+  cm+=n; if(cm<0){cm=11;cy--;} if(cm>11){cm=0;cy++;}
+  gridDrawn['cal-svg']=false; gridDrawn['cal-svg-appt']=false; gridDrawn['cal-svg-ldg']=false;
+  updateMlbl('mlbl'); updateMlbl('mlbl-appt'); updateMlbl('mlbl-ldg');
+  drawCalGrid('cal-svg'); updateCalCells('cal-svg');
+  const activeId=document.querySelector('.screen.on').id;
+  if(activeId==='s-appt'){drawCalGrid('cal-svg-appt');updateCalCells('cal-svg-appt');}
+  if(activeId==='s-ledger'){drawCalGrid('cal-svg-ldg');updateCalCells('cal-svg-ldg');}
+  rdStats();
+}
+
+function updateMlbl(id){
+  const el=document.getElementById(id);
+  if(el) el.textContent=cm+1;
+}
+
+function getCalDims(svgId){
+  const W=(window.innerWidth>480?480:window.innerWidth)-24;
+  const DAY_W=Math.round(W/7);
+  const HDR=26, CH=80;
+  const first=new Date(cy,cm,1).getDay();
+  const days=new Date(cy,cm+1,0).getDate();
+  const rows=Math.ceil((first+days)/7);
+  const H=HDR+rows*CH+4;
+  return {W,DAY_W,HDR,CH,rows,H,first,days,TW:W,TH:H};
+}
+
+function drawCalGrid(svgId){
+  const svg=document.getElementById(svgId);
+  if(!svg) return;
+  const {W,DAY_W,HDR,CH,rows,H,TW,TH}=getCalDims(svgId);
+  svg.innerHTML='';
+  svg.setAttribute('viewBox',`0 0 ${TW} ${TH}`);
+  svg.setAttribute('height',TH);
+  gridDrawn[svgId]=true;
+
+  // cell-layer 먼저 (바가 선 위에 그려지도록)
+  const cl=document.createElementNS(NS,'g');
+  cl.setAttribute('class','cell-layer');
+  svg.appendChild(cl);
+
+  // 그리드 선을 별도 레이어로 위에 올림
+  const gl=document.createElementNS(NS,'g');
+  gl.setAttribute('class','grid-layer');
+  svg.appendChild(gl);
+  const addG=(x1,y1,x2,y2)=>gl.appendChild(mk('path',{fill:'none',stroke:'#444','stroke-width':'1.3','stroke-linecap':'round','stroke-linejoin':'round',d:sketchPath(x1,y1,x2,y2)}));
+  const SW='1.3', C='#444';
+  addG(1,1,TW-1,1); addG(TW-1,1,TW-1,TH-1); addG(TW-1,TH-1,1,TH-1); addG(1,TH-1,1,1);
+  addG(1,HDR,TW-1,HDR);
+  for(let c=1;c<7;c++) addG(c*DAY_W,1,c*DAY_W,TH-1);
+  for(let r=1;r<rows;r++) addG(1,HDR+r*CH,TW-1,HDR+r*CH);
+  ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach((d,i)=>{
+    const t=mk('text',{x:i*DAY_W+DAY_W/2,y:HDR-8,'font-family':'Outfit','font-size':'13','font-weight':'200','text-anchor':'middle',fill:i===0?'#c0392b':'#444'});
+    t.textContent=d; gl.appendChild(t);
+  });
+}
+
+function updateCalCells(svgId){
+  const svg=document.getElementById(svgId);
+  if(!svg) return;
+  if(!gridDrawn[svgId]) drawCalGrid(svgId);
+  let cl=svg.querySelector('.cell-layer');
+  if(!cl){cl=document.createElementNS(NS,'g');cl.setAttribute('class','cell-layer');svg.appendChild(cl);}
+  cl.innerHTML='';
+
+  const {DAY_W,HDR,CH,first,days}=getCalDims(svgId);
+  const isDutyTab=(svgId==='cal-svg');
+  let col=first, row=0;
+
+  for(let d=1;d<=days;d++){
+    const k=dkey(cy,cm,d), rec=ddata[k]||{};
+    const isT=now.getFullYear()===cy&&now.getMonth()===cm&&now.getDate()===d;
+    const isSun=col===0;
+    const cx=col*DAY_W, cy2=HDR+row*CH;
+
+    if(isDutyTab && inputMode && d===currentInputDay){
+      cl.appendChild(mk('circle',{cx:cx+12,cy:cy2+15,r:'11',fill:'rgba(255,235,150,0.65)'}));
+    }
+    // ledger 탭 선택 날짜 노란 동그라미
+    if(svgId==='cal-svg-ldg' && ldgSelectedDay===dkey(cy,cm,d)){
+      cl.appendChild(mk('circle',{cx:cx+12,cy:cy2+15,r:'11',fill:'rgba(255,235,150,0.65)'}));
+    }
+    // appt 탭 선택 범위 하이라이트
+    if(!isDutyTab && svgId==='cal-svg-appt'){
+      const thisDkey=dkey(cy,cm,d);
+      const inRange=apptRangeStart&&(
+        (apptRangeEnd&&thisDkey>=apptRangeStart&&thisDkey<=apptRangeEnd)||
+        (!apptRangeEnd&&thisDkey===apptRangeStart)
+      );
+      if(inRange){
+        const isS=thisDkey===apptRangeStart, isE=thisDkey===(apptRangeEnd||apptRangeStart);
+        cl.appendChild(mk('rect',{x:isS?cx+1:cx,y:cy2+3,width:isS&&isE?DAY_W-2:isS||isE?DAY_W-1:DAY_W,height:24,fill:'rgba(255,220,50,0.35)',rx:isS&&isE?'8':isS?'8 0 0 8':isE?'0 8 8 0':'0'}));
+      }
+    }
+    if(isT){
+      cl.appendChild(mk('circle',{cx:cx+12,cy:cy2+15,r:'11',fill:'rgba(100,180,255,0.20)'}));
+    }
+
+    const hit=mk('rect',{x:cx,y:cy2,width:DAY_W,height:CH,fill:'transparent',style:'cursor:pointer'});
+    hit.addEventListener('click',(dd=>()=>{
+      if(isDutyTab && inputMode){
+        currentInputDay=dd;
+        updateCalCells('cal-svg');
+        rdDutyBanner();
+      } else if(svgId==='cal-svg-appt'){
+        if(apptClickStep===0){
+          apptRangeStart=dkey(cy,cm,dd);
+          apptRangeEnd=null;
+          apptClickStep=1;
+        } else {
+          const clicked=dkey(cy,cm,dd);
+          if(clicked<apptRangeStart){
+            apptRangeEnd=apptRangeStart;
+            apptRangeStart=clicked;
+          } else {
+            apptRangeEnd=clicked;
+          }
+          apptClickStep=0;
+        }
+        updateApptRangeLabels();
+        updateCalCells('cal-svg-appt');
+        rdApptDayPanel();
+      } else if(svgId==='cal-svg-ldg'){
+        ldgSelectedDay=dkey(cy,cm,dd);
+        updateCalCells('cal-svg-ldg');
+        rdLdgDayPanel();
+      } else if(isDutyTab){
+        // duty탭 일반모드: 클릭해도 아무것도 안 뜸
+      } else {
+        openM(dd);
+      }
+    })(d));
+    cl.appendChild(hit);
+
+    const dn=mk('text',{x:cx+5,y:cy2+16,'font-family':'Outfit,sans-serif','font-size':'10','font-weight':'300',fill:isT?'#1a6eb5':isSun?'#c0392b':'#333'});
+    dn.textContent=d; cl.appendChild(dn);
+
+    if(rec.duty){
+      const dt2=dutyTypes.find(x=>x.id===rec.duty);
+      const dcol=dt2?dt2.color:'#888';
+      if(isDutyTab){
+        const dtxt=mk('text',{x:cx+DAY_W/2,y:cy2+CH/2+8,'font-family':'Outfit,sans-serif','font-size':'27','font-weight':'600','text-anchor':'middle',fill:dcol,opacity:'0.6'});
+        dtxt.textContent=rec.duty; cl.appendChild(dtxt);
+      } else {
+        const dtxt=mk('text',{x:cx+DAY_W-5,y:cy2+13,'font-family':'Outfit,sans-serif','font-size':'9','font-weight':'500','text-anchor':'end',fill:dcol,opacity:'0.7'});
+        dtxt.textContent=rec.duty; cl.appendChild(dtxt);
+      }
+    }
+    if(rec.memo) cl.appendChild(mk('circle',{cx:cx+DAY_W-7,cy:cy2+8,r:'2.5',fill:'#c0392b'}));
+    if(!isDutyTab && svgId==='cal-svg-appt'){
+      const thisDkey=dkey(cy,cm,d);
+      const dayAppts=appts.filter(a=>{
+        const s=a.d||thisDkey, e=a.dEnd||a.d||thisDkey;
+        return thisDkey>=s && thisDkey<=e;
+      });
+      const maxShow=4;
+      dayAppts.slice(0,maxShow).forEach((a,ai)=>{
+        const hy=cy2+26+ai*15;
+        const s=a.d, e=a.dEnd||a.d;
+        const isStart=thisDkey===s;
+        const isEnd=thisDkey===e;
+        const barColor=a.color||'#b0c4e8';
+        // 바: 시작=왼쪽 둥글, 끝=오른쪽 둥글, 중간=셀 꽉 채움(선 덮기)
+        const PAD=2; // 시작/끝 안쪽 여백
+        const bx=isStart?cx+PAD:cx-1;
+        const bw=isStart&&isEnd?DAY_W-PAD*2:isStart?DAY_W-PAD+1:isEnd?DAY_W-PAD+1:DAY_W+2;
+        const rxVal=isStart&&isEnd?'3':isStart?'3 0 0 3':isEnd?'0 3 3 0':'0';
+        const hl=mk('rect',{x:bx,y:hy,width:bw,height:13,fill:barColor,rx:rxVal});
+        cl.appendChild(hl);
+        if(isStart){
+          const atxt=mk('text',{x:bx+4,y:hy+10,'font-family':'Outfit,sans-serif','font-size':'8.5','font-weight':'500',fill:'#333'});
+          atxt.textContent=a.t.length>6?a.t.slice(0,6)+'…':a.t;
+          cl.appendChild(atxt);
+        }
+      });
+      if(dayAppts.length>maxShow){
+        const mt=mk('text',{x:cx+3,y:cy2+CH-4,'font-family':'Outfit,sans-serif','font-size':'8','text-anchor':'start',fill:'#999'});
+        mt.textContent=`+${dayAppts.length-maxShow}`;
+        cl.appendChild(mt);
+      }
+    }
+    // ledger 탭: 수입/지출 달력 셀에 표시
+    if(!isDutyTab && svgId==='cal-svg-ldg'){
+      const thisDkey=dkey(cy,cm,d);
+      const dayLdg=ldg.filter(l=>l.d===thisDkey);
+      const inc=dayLdg.filter(l=>l.type==='in').reduce((s,l)=>s+l.amt,0);
+      const exp=dayLdg.filter(l=>l.type==='ex').reduce((s,l)=>s+l.amt,0);
+      const fmt=n=>{
+        if(n>=10000) return (n/10000).toFixed(1).replace(/\.0$/,'')+'만';
+        if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'천';
+        return n+'';
+      };
+      let yi=cy2+32;
+      if(inc>0){
+        const t=mk('text',{x:cx+DAY_W/2,y:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#1a6e33'});
+        t.textContent='+'+fmt(inc); cl.appendChild(t); yi+=14;
+      }
+      if(exp>0){
+        const t=mk('text',{x:cx+DAY_W/2,y:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#c0392b'});
+        t.textContent='−'+fmt(exp); cl.appendChild(t);
+      }
+    }
+
+    col++; if(col===7){col=0;row++;}
+  }
+  rdStats();
+}
+
+function toggleInputMode(){
+  inputMode=!inputMode;
+  if(inputMode) currentInputDay=1;
+  const btn=document.getElementById('input-mode-btn');
+  if(btn){btn.textContent=inputMode?'✕':'+';btn.style.color=inputMode?'#c0392b':'#bbb';}
+  updateCalCells('cal-svg');
+  rdDutyBanner();
+}
+
+function rdDutyBanner(){
+  const titleEl=document.querySelector('.duty-banner-title');
+  if(titleEl) titleEl.textContent=inputMode?`→  ${currentInputDay}일 입력중`:'duty';
+  const row=document.getElementById('duty-chips');
+  if(!row) return;
+  row.innerHTML='';
+  dutyTypes.forEach(dt=>{
+    const chip=document.createElement('div');
+    chip.className='duty-chip'+(inputMode?' active-mode':'');
+    chip.innerHTML=`<span class="duty-chip-label" style="color:${dt.color}">${dt.label}</span>`;
+    chip.onclick=()=>{
+      if(!inputMode) return;
+      const days=new Date(cy,cm+1,0).getDate();
+      if(currentInputDay>days) return;
+      const k=dkey(cy,cm,currentInputDay);
+      ddata[k]={...(ddata[k]||{}),duty:dt.id};
+      if(currentInputDay<days) currentInputDay++;
+      updateCalCells('cal-svg');
+      rdDutyBanner();
+    };
+    row.appendChild(chip);
+  });
+  if(inputMode){
+    const done=document.createElement('button');
+    done.className='duty-chip-done';
+    done.textContent='done';
+    done.onclick=toggleInputMode;
+    row.appendChild(done);
+  } else {
+    const addBtn=document.createElement('button');
+    addBtn.className='duty-chip-add';
+    addBtn.textContent='+';
+    addBtn.onclick=openDutyEdit;
+    row.appendChild(addBtn);
+  }
+}
+
+function resetLastDuty(){
+  if(!inputMode) return;
+  const prev=currentInputDay>1?currentInputDay-1:1;
+  const k=dkey(cy,cm,prev);
+  if(ddata[k]) delete ddata[k].duty;
+  currentInputDay=prev;
+  updateCalCells('cal-svg');
+  rdDutyBanner();
+}
+
+function rdStats(){
+  const el=document.getElementById('stats');
+  if(!el) return;
+  const days=new Date(cy,cm+1,0).getDate();
+  const cnt={};
+  for(let d=1;d<=days;d++){
+    const r=ddata[dkey(cy,cm,d)];
+    if(r&&r.duty) cnt[r.duty]=(cnt[r.duty]||0)+1;
+  }
+  el.innerHTML=Object.entries(cnt).map(([k,v])=>{
+    const dt=dutyTypes.find(x=>x.id===k);
+    const c=dt?dt.color:'#888';
+    return `<span class="schip" style="color:${c}">${k} ×${v}</span>`;
+  }).join('');
+}
+
+function openM(d){
+  sd=d;
+  const r=ddata[dkey(cy,cm,d)]||{};
+  const el=document.getElementById('m-title');
+  if(el) el.textContent=`${cy}년 ${cm+1}월 ${d}일`;
+  const me=document.getElementById('m-memo');
+  if(me) me.value=r.memo||'';
+  const modal=document.getElementById('modal');
+  if(modal) modal.style.display='flex';
+}
+function saveDay(){
+  if(!sd) return;
+  const k=dkey(cy,cm,sd);
+  const memo=(document.getElementById('m-memo')||{}).value||'';
+  if(memo.trim()) ddata[k]={...(ddata[k]||{}),memo:memo.trim()};
+  else if(ddata[k]) delete ddata[k].memo;
+  closeM(); updateCalCells('cal-svg');
+}
+function clearDay(){
+  if(!sd) return;
+  delete ddata[dkey(cy,cm,sd)];
+  closeM(); updateCalCells('cal-svg');
+}
+function closeM(){
+  const m=document.getElementById('modal'); if(m) m.style.display='none'; sd=null;
+}
+
+function openDutyEdit(){
+  rdDeditList(); rdColorPalette();
+  const m=document.getElementById('dedit-modal'); if(m) m.style.display='flex';
+}
+function closeDutyEdit(){
+  const m=document.getElementById('dedit-modal'); if(m) m.style.display='none';
+}
+function rdDeditList(){
+  const el=document.getElementById('dedit-list'); if(!el) return;
+  el.innerHTML=dutyTypes.map((dt,i)=>`
+    <div class="dedit-item">
+      <span class="dedit-item-label" style="color:${dt.color}">${dt.label}</span>
+      <input type="color" value="${dt.color}" style="width:24px;height:24px;border:none;padding:0;cursor:pointer;background:none;border-radius:50%;flex-shrink:0" onchange="changeDutyColor('${dt.id}',this.value)"/>
+      <span style="flex:1"></span>
+      ${i>=4?`<button class="dedit-del" onclick="deleteDutyType('${dt.id}')">×</button>`:'<span style="width:20px"></span>'}
+    </div>`).join('');
+}
+function rdColorPalette(){
+  const el=document.getElementById('color-palette'); if(!el) return;
+  el.innerHTML='';
+  PALETTE.forEach(c=>{
+    const s=document.createElement('div');
+    s.className='color-swatch';
+    s.style.background=c;
+    s.style.outline=c===newDutyColor?'2px solid #222':'none';
+    s.style.outlineOffset='2px';
+    s.onclick=()=>{newDutyColor=c;rdColorPalette();};
+    el.appendChild(s);
+  });
+  const label=document.createElement('label');
+  label.style.cssText='width:24px;height:24px;border-radius:50%;overflow:hidden;cursor:pointer;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;position:relative';
+  label.innerHTML='+<input type="color" style="opacity:0;position:absolute;width:0;height:0" onchange="newDutyColor=this.value;rdColorPalette()">';
+  el.appendChild(label);
+}
+function changeDutyColor(id,color){
+  const dt=dutyTypes.find(d=>d.id===id); if(dt) dt.color=color;
+  rdDeditList(); rdDutyBanner(); updateCalCells('cal-svg'); rdStats();
+}
+function addDutyType(){
+  const nameEl=document.getElementById('dedit-name'); if(!nameEl) return;
+  const name=nameEl.value.trim().toUpperCase(); if(!name) return;
+  dutyTypes.push({id:name,label:name,color:newDutyColor});
+  nameEl.value=''; newDutyColor='#2244bb';
+  rdDeditList(); rdColorPalette(); rdDutyBanner();
+}
+function deleteDutyType(id){
+  dutyTypes=dutyTypes.filter(d=>d.id!==id);
+  rdDeditList(); rdDutyBanner(); updateCalCells('cal-svg'); rdStats();
+}
+
+function updateApptRangeLabels(){
+  const fmt=k=>k?k.split('-').slice(1).map(Number).join('/'):'—';
+  const sl=document.getElementById('appt-start-lbl');
+  const el=document.getElementById('appt-end-lbl');
+  if(sl) sl.textContent=fmt(apptRangeStart);
+  if(el) el.textContent=fmt(apptRangeEnd||apptRangeStart);
+}
+function clearApptRange(){
+  apptRangeStart=null; apptRangeEnd=null; apptClickStep=0;
+  updateApptRangeLabels();
+  updateCalCells('cal-svg-appt');
+}
+function addApptDirect(){
+  const t=(document.getElementById('appt-txt')||{}).value||'';
+  if(!t.trim()) return;
+  const colorEl=document.getElementById('appt-color');
+  const color=colorEl?colorEl.value:'#b0c4e8';
+  const dStart=apptRangeStart||'';
+  const dEnd=apptRangeEnd||dStart;
+  appts.push({id:Date.now(),t:t.trim(),d:dStart,dEnd:dEnd,color:color});
+  appts.sort((a,b)=>a.d>b.d?1:-1);
+  document.getElementById('appt-txt').value='';
+  clearApptRange();
+  updateCalCells('cal-svg-appt');
+  rdAppt();
+}
+function delAppt(id){appts=appts.filter(a=>a.id!==id);updateCalCells('cal-svg-appt');rdAppt();}
+function rdAppt(){
+  const el=document.getElementById('appt-list'); if(!el) return;
+  if(!appts.length){el.innerHTML='<div class="empty-st">no plans yet</div>';return;}
+  el.innerHTML=appts.map(a=>{
+    const ds=a.d?new Date(a.d+'T00:00').toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'}):'no date';
+    return`<div class="aitem"><div class="aname">${a.t}</div><div class="adate">${ds}</div><button class="dbtn" onclick="delAppt(${a.id})">×</button></div>`;
+  }).join('');
+}
+
+function setT(t){
+  ltype=t;
+  const ti=document.getElementById('t-in'); if(ti) ti.className='tbtn'+(t==='in'?' ain':'');
+  const te=document.getElementById('t-ex'); if(te) te.className='tbtn'+(t==='ex'?' aex':'');
+}
+function addLdg(){
+  const desc=(document.getElementById('ldg-desc')||{}).value||'';
+  const amt=parseInt((document.getElementById('ldg-amt')||{}).value);
+  if(!desc.trim()||!amt||amt<=0) return;
+  const d=ldgSelectedDay||dkey(now.getFullYear(),now.getMonth(),now.getDate());
+  ldg.unshift({id:Date.now(),desc:desc.trim(),amt,type:ltype,d,date:d.split('-').slice(1).map(Number).join('/')});
+  document.getElementById('ldg-desc').value=''; document.getElementById('ldg-amt').value='';
+  updateCalCells('cal-svg-ldg'); rdLdg(); rdLdgDayPanel();
+}
+function delLdg(id){ldg=ldg.filter(l=>l.id!==id);updateCalCells('cal-svg-ldg');rdLdg();rdLdgDayPanel();}
+function rdLdg(){
+  const inc=ldg.filter(l=>l.type==='in').reduce((s,l)=>s+l.amt,0);
+  const exp=ldg.filter(l=>l.type==='ex').reduce((s,l)=>s+l.amt,0);
+  const f=n=>'₩'+n.toLocaleString('ko-KR');
+  const eli=document.getElementById('ls-in'); if(eli) eli.textContent=f(inc);
+  const ele=document.getElementById('ls-ex'); if(ele) ele.textContent=f(exp);
+  const b=inc-exp;
+  const elb=document.getElementById('ls-bal'); if(elb) elb.textContent=(b<0?'-':'')+'₩'+Math.abs(b).toLocaleString('ko-KR');
+}
+function rdLdgDayPanel(){
+  const el=document.getElementById('ldg-day-panel'); if(!el) return;
+  if(!ldgSelectedDay){el.innerHTML='';return;}
+  const dayLdg=ldg.filter(l=>l.d===ldgSelectedDay).slice().reverse();
+  const parts=ldgSelectedDay.split('-').slice(1).map(Number);
+  if(!dayLdg.length){
+    el.innerHTML=`<div style="font-size:12px;color:#ccc;padding:4px 0">${parts[0]}/${parts[1]} — 내역 없음</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="font-size:11px;color:#aaa;margin-bottom:4px">${parts[0]}/${parts[1]}</div>`+
+    dayLdg.map(l=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5">
+      <span style="font-size:14px;font-weight:500">${l.desc}</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px;font-weight:600;color:${l.type==='in'?'#1a6e33':'#c0392b'}">${l.type==='ex'?'−':''}₩${l.amt.toLocaleString('ko-KR')}</span>
+        <button onclick="delLdg(${l.id})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:16px">×</button>
+      </span>
+    </div>`).join('');
+}
+function rdApptDayPanel(){
+  const el=document.getElementById('appt-day-panel'); if(!el) return;
+  const selDay=apptRangeStart;
+  if(!selDay){el.innerHTML='';return;}
+  const parts=selDay.split('-').slice(1).map(Number);
+  const dayAppts=appts.filter(a=>{
+    const s=a.d||selDay, e=a.dEnd||a.d||selDay;
+    return selDay>=s && selDay<=e;
+  });
+  if(!dayAppts.length){
+    el.innerHTML=`<div style="font-size:12px;color:#ccc;padding:4px 0">${parts[0]}/${parts[1]} — 일정 없음</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="font-size:11px;color:#aaa;margin-bottom:4px">${parts[0]}/${parts[1]}</div>`+
+    dayAppts.map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5">
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${a.color||'#b0c4e8'};flex-shrink:0;display:inline-block"></span>
+        <span style="font-size:14px;font-weight:500">${a.t}</span>
+      </span>
+      <button onclick="delAppt(${a.id})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:16px">×</button>
+    </div>`).join('');
+}
+
+function addMemo(){}  // 더 이상 사용 안 함
+function delMemo(id){memos=memos.filter(m=>m.id!==id);rdMemo();}
+function toggleMemo(id){
+  const m=memos.find(m=>m.id===id); if(m) m.done=!m.done; rdMemo();
+}
+function rdMemo(){
+  const el=document.getElementById('mcards'); if(!el) return;
+  // 빈 항목이 없으면 끝에 하나 추가
+  if(!memos.length||memos[memos.length-1].t.trim()!==''){
+    memos.push({id:Date.now(),t:'',done:false});
+  }
+  el.innerHTML=memos.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 20px;border-bottom:1px solid #f5f5f5" id="mrow-${m.id}">
+      <div onclick="toggleMemo(${m.id})" style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${m.done?'#222':'#ccc'};background:${m.done?'#222':'transparent'};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        ${m.done?'<svg width="9" height="7" viewBox="0 0 9 7"><polyline points="1,3.5 3.5,6 8,1" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+      </div>
+      <input
+        value="${m.t.replace(/"/g,'&quot;')}"
+        placeholder="..."
+        data-id="${m.id}"
+        style="flex:1;border:none;outline:none;font-size:16px;font-family:'Outfit',sans-serif;font-weight:${m.done?'300':'400'};color:${m.done?'#bbb':'#222'};text-decoration:${m.done?'line-through':'none'};background:transparent;padding:0"
+        oninput="memoInput(${m.id},this.value)"
+        onkeydown="memoKey(event,${m.id})"
+      />
+      <button onclick="delMemo(${m.id})" style="background:none;border:none;color:#e0e0e0;cursor:pointer;font-size:16px;line-height:1;opacity:0;transition:opacity .1s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">×</button>
+    </div>`).join('');
+  // 포커스 마지막 항목으로
+}
+function memoInput(id,val){
+  const m=memos.find(m=>m.id===id); if(m) m.t=val;
+  // 빈 항목 중복 방지: 마지막이 빈 게 여러 개면 정리
+  while(memos.length>1 && memos[memos.length-1].t==='' && memos[memos.length-2].t===''){
+    memos.splice(memos.length-2,1);
+  }
+}
+function memoKey(e,id){
+  const idx=memos.findIndex(m=>m.id===id);
+  if(e.key==='Enter'){
+    e.preventDefault();
+    // 현재 위치 다음에 새 항목 삽입
+    const newItem={id:Date.now(),t:'',done:false};
+    memos.splice(idx+1,0,newItem);
+    rdMemo();
+    // 새 항목 인풋에 포커스
+    setTimeout(()=>{
+      const inp=document.querySelector(`[data-id="${newItem.id}"]`);
+      if(inp) inp.focus();
+    },10);
+  } else if(e.key==='Backspace'&&memos[idx].t===''&&memos.length>1){
+    e.preventDefault();
+    memos.splice(idx,1);
+    rdMemo();
+    setTimeout(()=>{
+      const prev=memos[Math.max(0,idx-1)];
+      const inp=document.querySelector(`[data-id="${prev.id}"]`);
+      if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+    },10);
+  } else if(e.key==='ArrowUp'&&idx>0){
+    e.preventDefault();
+    const inp=document.querySelector(`[data-id="${memos[idx-1].id}"]`);
+    if(inp) inp.focus();
+  } else if(e.key==='ArrowDown'&&idx<memos.length-1){
+    e.preventDefault();
+    const inp=document.querySelector(`[data-id="${memos[idx+1].id}"]`);
+    if(inp) inp.focus();
+  }
+}
+
+window.addEventListener('resize',()=>{
+  gridDrawn['cal-svg']=false; gridDrawn['cal-svg-appt']=false; gridDrawn['cal-svg-ldg']=false;
+  drawCalGrid('cal-svg'); updateCalCells('cal-svg');
+});
+setTimeout(()=>{
+  ['mlbl','mlbl-appt','mlbl-ldg'].forEach(id=>updateMlbl(id));
+  const ty=document.getElementById('tb-today'); if(ty) ty.textContent=cy;
+  drawCalGrid('cal-svg'); updateCalCells('cal-svg');
+  rdDutyBanner(); rdAppt(); rdLdg(); rdMemo();
+},80);
+</script>
+</body>
+</html>
