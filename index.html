@@ -184,7 +184,7 @@ html,body{height:100%;background:#fff;font-family:'Outfit',sans-serif;font-weigh
       <div style="padding:10px 20px 4px">
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <input class="inp" id="ldg-desc" placeholder="desc" style="font-size:16px;flex:1.2"/>
-          <input class="inp" id="ldg-amt" type="number" placeholder="amount" style="flex:1;min-width:0;font-size:16px"/>
+          <input class="inp" id="ldg-amt" type="text" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;font-size:16px" oninput="fmtAmt(this)"/>
           <div class="ttgl">
             <button class="tbtn ain" id="t-in" onclick="setT('in')">+</button>
             <button class="tbtn" id="t-ex" onclick="setT('ex')">−</button>
@@ -493,13 +493,14 @@ function updateCalCells(svgId){
         if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'천';
         return n+'';
       };
-      let yi=cy2+32;
+      let yi=cy2+CH/2+4;
+      const total=inc>0&&exp>0;
       if(inc>0){
-        const t=mk('text',{x:cx+DAY_W/2,y:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#1a6e33'});
-        t.textContent='+'+fmt(inc); cl.appendChild(t); yi+=14;
+        const t=mk('text',{x:cx+DAY_W/2,y:total?yi-7:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#27ae60'});
+        t.textContent='+'+fmt(inc); cl.appendChild(t);
       }
       if(exp>0){
-        const t=mk('text',{x:cx+DAY_W/2,y:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#c0392b'});
+        const t=mk('text',{x:cx+DAY_W/2,y:total?yi+9:yi,'font-family':'Outfit,sans-serif','font-size':'11','font-weight':'600','text-anchor':'middle',fill:'#e74c3c'});
         t.textContent='−'+fmt(exp); cl.appendChild(t);
       }
     }
@@ -699,9 +700,15 @@ function setT(t){
   const ti=document.getElementById('t-in'); if(ti) ti.className='tbtn'+(t==='in'?' ain':'');
   const te=document.getElementById('t-ex'); if(te) te.className='tbtn'+(t==='ex'?' aex':'');
 }
+function fmtAmt(el){
+  const raw=el.value.replace(/[^0-9]/g,'');
+  const num=parseInt(raw)||0;
+  el.value=num>0?num.toLocaleString('ko-KR'):'';
+}
 function addLdg(){
   const desc=(document.getElementById('ldg-desc')||{}).value||'';
-  const amt=parseInt((document.getElementById('ldg-amt')||{}).value);
+  const rawAmt=(document.getElementById('ldg-amt')||{}).value||'';
+  const amt=parseInt(rawAmt.replace(/[^0-9]/g,''));
   if(!desc.trim()||!amt||amt<=0) return;
   const d=ldgSelectedDay||dkey(now.getFullYear(),now.getMonth(),now.getDate());
   ldg.unshift({id:Date.now(),desc:desc.trim(),amt,type:ltype,d,date:d.split('-').slice(1).map(Number).join('/')});
